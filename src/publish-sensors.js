@@ -1,5 +1,3 @@
-// publish-sensors.js
-
 const mqtt = require('mqtt');
 
 const mqttBrokerUrl = 'wss://test.mosquitto.org:8081/mqtt';
@@ -13,12 +11,16 @@ client.on('connect', () => {
     const temperature = getRandomNumber(20, 30);
     const humidity = getRandomNumber(40, 60);
     const height = getRandomNumber(100, 200);
+    const latitude = getRandomNumber(-15.8349, -15.7934);  // Brasília latitude range
+    const longitude = getRandomNumber(-47.9417, -47.8823); // Brasília longitude range
+    const location = JSON.stringify({ lat: latitude, lng: longitude });
 
-    client.publish('temperature', temperature.toString(), { qos: 1 });  // Publish temperature with QoS 1
-    client.publish('humidity', humidity.toString(), { qos: 1 });        // Publish humidity with QoS 1
-    client.publish('height', height.toString(), { qos: 1 });            // Publish height with QoS 1
+    client.publish('temperature', temperature.toString(), { qos: 1 });
+    client.publish('humidity', humidity.toString(), { qos: 1 });
+    client.publish('altitude', height.toString(), { qos: 1 });
+    client.publish('location', location, { qos: 1 });
 
-    console.log(`Published: temperature=${temperature}, humidity=${humidity}, height=${height}`);
+    console.log(`Published: temperature=${temperature}, humidity=${humidity}, altitude=${height}, location=${location}`);
   }, 5000);
 });
 
