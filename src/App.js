@@ -2,7 +2,15 @@ import React, { useState, useEffect } from 'react';
 import logo from './GIF.gif';
 import './App.css';
 import mqtt from 'mqtt';
-import { VictoryChart, VictoryLine, VictoryAxis, VictoryTheme, VictoryLegend, VictoryTooltip, VictoryVoronoiContainer } from 'victory';
+import {
+  VictoryChart,
+  VictoryLine,
+  VictoryAxis,
+  VictoryTheme,
+  VictoryLegend,
+  VictoryTooltip,
+  VictoryVoronoiContainer
+} from 'victory';
 import Map from './Map'; // Importa o componente Map
 import 'leaflet/dist/leaflet.css'; // Importa o CSS do Leaflet
 
@@ -12,7 +20,7 @@ function App() {
   const [temperatureData, setTemperatureData] = useState([]);
   const [humidityData, setHumidityData] = useState([]);
   const [altitudeData, setAltitudeData] = useState([]);
-  const [latestLocation, setLatestLocation] = useState({ lat: -15.7942, lng: -47.8822 });
+  const [latestLocation, setLatestLocation] = useState(null);
 
   useEffect(() => {
     const client = mqtt.connect(mqttBrokerUrl);
@@ -29,19 +37,28 @@ function App() {
       const payload = message.toString();
       console.log(`Received message: ${topic} = ${payload}`);
 
+      const dataPoint = { x: new Date(), y: parseFloat(payload), type: '' };
+
       switch (topic) {
         case 'temperature':
-          setTemperatureData(prevData => [...prevData, { x: new Date(), y: parseFloat(payload), type: 'Temperatura (°C)' }]);
+          dataPoint.type = 'Temperatura (°C)';
+          setTemperatureData(prevData => [...prevData.slice(-29), dataPoint]); // Keep the last 30 data points
           break;
         case 'humidity':
-          setHumidityData(prevData => [...prevData, { x: new Date(), y: parseFloat(payload), type: 'Umidade (%)' }]);
+          dataPoint.type = 'Umidade (%)';
+          setHumidityData(prevData => [...prevData.slice(-29), dataPoint]); // Keep the last 30 data points
           break;
         case 'altitude':
-          setAltitudeData(prevData => [...prevData, { x: new Date(), y: parseFloat(payload), type: 'Altura (m)' }]);
+          dataPoint.type = 'Altura (m)';
+          setAltitudeData(prevData => [...prevData.slice(-29), dataPoint]); // Keep the last 30 data points
           break;
         case 'location':
-          const location = JSON.parse(payload);
-          setLatestLocation(location);
+          try {
+            const location = JSON.parse(payload);
+            setLatestLocation(location);
+          } catch (error) {
+            console.error('Invalid location data:', payload);
+          }
           break;
         default:
           break;
@@ -52,8 +69,18 @@ function App() {
       console.error('Connection error: ', err);
     });
 
+    // Ensure the client stays connected
+    const handleReconnect = () => {
+      if (!client.connected) {
+        client.reconnect();
+      }
+    };
+
+    const intervalId = setInterval(handleReconnect, 10000); // Check every 10 seconds
+
     return () => {
       client.end();
+      clearInterval(intervalId);
     };
   }, []);
 
@@ -63,7 +90,8 @@ function App() {
         <img src={logo} className="App-logo" alt="logo" />
         <h1>Satélite Ad Supernat</h1>
         <p>
-          Edit <code>src/App.js</code> and save to reload.
+          Projeto desenvolvido pela turma de Sábado das 08:00 às 10:00<br></br>
+          Escola MARTE
         </p>
         <a
           className="App-link"
@@ -144,7 +172,7 @@ function App() {
           </VictoryChart>
         </div>
         <div className="map-container">
-          <Map initialLocation={latestLocation} />
+          {latestLocation ? <Map initialLocation={latestLocation} /> : <p>Carregando Mapa...</p>}
         </div>
       </div>
     </div>
