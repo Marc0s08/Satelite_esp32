@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import logo from './GIF.gif';
+import logo from './image/Logo.gif';
 import './App.css';
 import mqtt from 'mqtt';
 import {
@@ -14,7 +14,8 @@ import {
 import Map from './Map'; // Importa o componente Map
 import 'leaflet/dist/leaflet.css'; // Importa o CSS do Leaflet
 
-const mqttBrokerUrl = 'wss://test.mosquitto.org:8081/mqtt';
+const mqttBrokerUrl = 'wss://test.mosquitto.org:8081/ws';
+const prefix = 'superna/';
 
 function App() {
   const [temperatureData, setTemperatureData] = useState([]);
@@ -26,57 +27,82 @@ function App() {
     const client = mqtt.connect(mqttBrokerUrl);
 
     client.on('connect', () => {
-      console.log('Connected to MQTT broker');
-      client.subscribe('temperature');
-      client.subscribe('humidity');
-      client.subscribe('altitude');
-      client.subscribe('location');
+      console.log('Conectado ao broker MQTT');
+      client.subscribe(`${prefix}temperature`, (err) => {
+        if (!err) {
+          console.log(`Inscrito em ${prefix}temperature`);
+        } else {
+          console.error(`Falha ao se inscrever em ${prefix}temperature`, err);
+        }
+      });
+      client.subscribe(`${prefix}humidity`, (err) => {
+        if (!err) {
+          console.log(`Inscrito em ${prefix}humidity`);
+        } else {
+          console.error(`Falha ao se inscrever em ${prefix}humidity`, err);
+        }
+      });
+      client.subscribe(`${prefix}location`, (err) => {
+        if (!err) {
+          console.log(`Inscrito em ${prefix}location`);
+        } else {
+          console.error(`Falha ao se inscrever em ${prefix}location`, err);
+        }
+      });
+      client.subscribe(`${prefix}altitude`, (err) => {
+        if (!err) {
+          console.log(`Inscrito em ${prefix}altitude`);
+        } else {
+          console.error(`Falha ao se inscrever em ${prefix}altitude`, err);
+        }
+      });
     });
 
     client.on('message', (topic, message) => {
       const payload = message.toString();
-      console.log(`Received message: ${topic} = ${payload}`);
+      console.log(`Mensagem recebida: ${topic} = ${payload}`);
 
       const dataPoint = { x: new Date(), y: parseFloat(payload), type: '' };
 
       switch (topic) {
-        case 'temperature':
+        case `${prefix}temperature`:
           dataPoint.type = 'Temperatura (°C)';
-          setTemperatureData(prevData => [...prevData.slice(-29), dataPoint]); // Keep the last 30 data points
+          setTemperatureData(prevData => [...prevData.slice(-59), dataPoint]);
           break;
-        case 'humidity':
+        case `${prefix}humidity`:
           dataPoint.type = 'Umidade (%)';
-          setHumidityData(prevData => [...prevData.slice(-29), dataPoint]); // Keep the last 30 data points
+          setHumidityData(prevData => [...prevData.slice(-59), dataPoint]);
           break;
-        case 'altitude':
-          dataPoint.type = 'Altura (m)';
-          setAltitudeData(prevData => [...prevData.slice(-29), dataPoint]); // Keep the last 30 data points
+        case `${prefix}altitude`:
+          dataPoint.type = 'Altitude (m)';
+          setAltitudeData(prevData => [...prevData.slice(-59), dataPoint]);
           break;
-        case 'location':
+        case `${prefix}location`:
           try {
             const location = JSON.parse(payload);
             setLatestLocation(location);
+            console.log('Dados de localização recebidos:', location);
           } catch (error) {
-            console.error('Invalid location data:', payload);
+            console.error('Dados de localização inválidos:', payload);
           }
           break;
         default:
+          console.warn(`Tópico não tratado: ${topic}`);
           break;
       }
     });
 
     client.on('error', (err) => {
-      console.error('Connection error: ', err);
+      console.error('Erro de conexão: ', err);
     });
 
-    // Ensure the client stays connected
     const handleReconnect = () => {
       if (!client.connected) {
         client.reconnect();
       }
     };
 
-    const intervalId = setInterval(handleReconnect, 10000); // Check every 10 seconds
+    const intervalId = setInterval(handleReconnect, 10000); // Verifica a cada 10 segundos
 
     return () => {
       client.end();
@@ -90,16 +116,16 @@ function App() {
         <img src={logo} className="App-logo" alt="logo" />
         <h1>Satélite Ad Supernat</h1>
         <p>
-          Projeto desenvolvido pela turma de Sábado das 08:00 às 10:00<br></br>
+          Projeto desenvolvido pela turma de Sábado das 08:00 às 10:00<br/>
           Escola MARTE
         </p>
         <a
           className="App-link"
-          href="https://reactjs.org"
+          href="http://192.168.15.13/"
           target="_blank"
           rel="noopener noreferrer"
         >
-          Learn React
+          Acesse a câmera
         </a>
       </header>
       <div className="content">
@@ -110,6 +136,7 @@ function App() {
             height={300}
             scale={{ x: 'time', y: 'linear' }}
             padding={{ top: 40, bottom: 60, left: 60, right: 60 }}
+            style={{ parent: { background: '#000000' } }}
             containerComponent={
               <VictoryVoronoiContainer
                 labels={({ datum }) => `${datum.type}: ${datum.y.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
@@ -126,7 +153,7 @@ function App() {
               data={[
                 { name: 'Temperatura (°C)', symbol: { fill: '#c43a31' } },
                 { name: 'Umidade (%)', symbol: { fill: '#6b8e23' } },
-                { name: 'Altura (m)', symbol: { fill: '#0000FF' } },
+                { name: 'Altitude (m)', symbol: { fill: '#0000ff' } },
               ]}
             />
             <VictoryAxis
@@ -134,13 +161,9 @@ function App() {
             />
             <VictoryAxis
               dependentAxis
-              tickFormat={(t) => {
-                if (t % 1 === 0) {
-                  return `${t.toFixed(0)} `;
-                } else {
-                  return '';
-                }
-              }}
+              domain={[1, 100]} // Definindo a escala de 1 a 100
+              tickValues={[0, 20, 40, 60, 80, 100]} // Valores fixos de 1 a 100
+              tickFormat={(t) => `${t.toFixed(0)}`}
             />
             <VictoryLine
               style={{
@@ -162,7 +185,7 @@ function App() {
             />
             <VictoryLine
               style={{
-                data: { stroke: '#0000FF' },
+                data: { stroke: '#0000ff' },
                 parent: { border: '1px solid #ccc' },
               }}
               data={altitudeData}
