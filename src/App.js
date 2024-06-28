@@ -15,7 +15,7 @@ import Map from './Map'; // Importa o componente Map
 import 'leaflet/dist/leaflet.css'; // Importa o CSS do Leaflet
 
 const mqttBrokerUrl = 'wss://test.mosquitto.org:8081/ws';
-const prefix = 'superna/';
+const prefix = 'supernatet/';
 
 function App() {
   const [temperatureData, setTemperatureData] = useState([]);
@@ -114,7 +114,7 @@ function App() {
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
-        <h1>Satélite Ad Supernat</h1>
+        <h1>Satélite Ad Supernatet</h1>
         <p>
           Projeto desenvolvido pela turma de Sábado das 08:00 às 10:00<br/>
           Escola MARTE
@@ -126,6 +126,14 @@ function App() {
           rel="noopener noreferrer"
         >
           Acesse a câmera
+        </a>
+        <a
+          className="App-link2"
+          href="https://www.youtube.com/watch?v=1XPxsOhZJQY&ab_channel=ThalesAugusto"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          .
         </a>
       </header>
       <div className="content">

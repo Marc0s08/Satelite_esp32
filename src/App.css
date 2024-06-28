@@ -22,6 +22,10 @@
 .App-link {
   color: #61dafb;
 }
+.App-link2 {
+  color: #000000;
+}
+
 
 .chart-container {
   display: flex;
