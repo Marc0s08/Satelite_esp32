@@ -120,14 +120,6 @@ function App() {
           Escola MARTE
         </p>
         <a
-          className="App-link"
-          href="http://192.168.15.13/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Acesse a câmera
-        </a>
-        <a
           className="App-link2"
           href="https://www.youtube.com/watch?v=1XPxsOhZJQY&ab_channel=ThalesAugusto"
           target="_blank"
